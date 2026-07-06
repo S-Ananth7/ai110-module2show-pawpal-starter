@@ -4,13 +4,29 @@
 
 **a. Initial design**
 
-- Briefly describe your initial UML design.
-- What classes did you include, and what responsibilities did you assign to each?
+The initial UML included six classes, each with a single clear responsibility:
+
+- **`Owner`** — stores the pet owner's name, total time available for the day (`available_minutes`), preferred start time, and any care preferences. It acts as the source of scheduling constraints.
+- **`Pet`** — a dataclass representing the animal being cared for. It holds a list of `Task` objects and links back to its `Owner`. It is responsible for managing its own task list (add, remove, sort by priority).
+- **`Task`** — a dataclass for a single care activity (e.g., "Morning walk"). It holds the title, duration in minutes, priority level, whether it recurs, and a category. It is the core unit of work the scheduler operates on.
+- **`Scheduler`** — the planning engine. It takes a `Pet` (which knows its `Owner`) and builds a `DailyPlan` by sorting tasks by priority and greedily fitting them into the available time window.
+- **`DailyPlan`** — the output object. It holds an ordered list of `ScheduledTask` entries, tracks total minutes used, and provides human-readable summaries and explanations.
+- **`ScheduledTask`** — a wrapper around a `Task` that adds concrete `start_time`, `end_time`, and a `reason` explaining why the task was included. It is created by `DailyPlan.add_entry` during scheduling.
+
+Relationships: `Owner` owns one or more `Pet`s → each `Pet` has zero or more `Task`s → `Scheduler` reads from `Pet` and produces a `DailyPlan` → `DailyPlan` contains `ScheduledTask`s → each `ScheduledTask` wraps a `Task`.
 
 **b. Design changes**
 
-- Did your design change during implementation?
-- If yes, describe at least one change and why you made it.
+After asking the AI coding assistant to review the skeleton, four improvements were made:
+
+1. **`Task` gained a `__post_init__` priority validator** — the original design had no guard against invalid priority strings (e.g., `"urgent"`). Since `PRIORITY_ORDER` is a fixed dict, passing an unknown key would silently return `None` during sorting. Adding a `ValueError` in `__post_init__` catches this at construction time.
+
+2. **`ScheduledTask` was converted to a `@dataclass`** — the original version used a manual `__init__`. Since it holds only data fields plus one formatting method, converting it to a dataclass makes it consistent with `Task` and `Pet`, reduces boilerplate, and gets `__repr__` for free (useful for debugging).
+
+3. **`Scheduler` now reads `Owner.preferred_start_time`** — the original design hardcoded `"08:00"` in `DailyPlan`. This meant the `Owner` class held a `preferred_start_time` attribute that nothing used. The fix threads that value through `Scheduler.__init__` so the plan's start time actually comes from the owner.
+
+4. **`DailyPlan.add_entry` received a detailed docstring** — the stub gave no hint about how `end_time` should be computed. Without that, the `ScheduledTask` would have no end time and total duration tracking would be broken. The updated docstring makes the implementation contract explicit before any logic is written.
+
 
 ---
 

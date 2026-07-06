@@ -58,6 +58,13 @@ class Task:
     is_recurring: bool = False
     category: str = "general"         # e.g. "walk", "feeding", "grooming"
 
+    def __post_init__(self) -> None:
+        """Validate that priority is one of the accepted values."""
+        if self.priority not in PRIORITY_ORDER:
+            raise ValueError(
+                f"Invalid priority '{self.priority}'. Must be one of: {list(PRIORITY_ORDER)}"
+            )
+
     def is_high_priority(self) -> bool:
         """Return True if this task has high priority."""
         pass  # TODO: implement
@@ -96,23 +103,17 @@ class Pet:
 
 
 # ---------------------------------------------------------------------------
-# ScheduledTask
+# ScheduledTask  (dataclass — consistent with Task / Pet)
 # ---------------------------------------------------------------------------
 
+@dataclass
 class ScheduledTask:
     """A Task that has been placed at a specific time in the plan."""
 
-    def __init__(
-        self,
-        task: Task,
-        start_time: str,
-        end_time: str,
-        reason: str = "",
-    ) -> None:
-        self.task = task
-        self.start_time = start_time
-        self.end_time = end_time
-        self.reason = reason
+    task: Task
+    start_time: str
+    end_time: str
+    reason: str = ""
 
     def format_entry(self) -> str:
         """Return a human-readable line for this scheduled task.
@@ -137,7 +138,12 @@ class DailyPlan:
         self.total_duration_minutes: int = 0
 
     def add_entry(self, task: Task, start_time: str) -> None:
-        """Wrap a Task in a ScheduledTask and append it to the plan."""
+        """Wrap a Task in a ScheduledTask and append it to the plan.
+
+        Must compute end_time from start_time + task.duration_minutes,
+        then append a ScheduledTask to self.scheduled_tasks and
+        increment self.total_duration_minutes.
+        """
         pass  # TODO: implement
 
     def get_summary(self) -> str:
@@ -158,16 +164,27 @@ class Scheduler:
 
     def __init__(self, pet: Pet, available_minutes: Optional[int] = None) -> None:
         self.pet = pet
-        # Fall back to owner's window if not explicitly overridden
+        # Derive time window from Owner when not explicitly overridden
         self.available_minutes = (
             available_minutes
             if available_minutes is not None
             else (pet.owner.available_minutes if pet.owner else 120)
         )
+        # Read preferred start time from Owner (falls back to "08:00")
+        self.start_time: str = (
+            pet.owner.preferred_start_time if pet.owner else "08:00"
+        )
 
     def build_plan(self) -> DailyPlan:
-        """Sort and fit tasks into available time; return a DailyPlan."""
-        pass  # TODO: implement
+        """Sort and fit tasks into available time; return a DailyPlan.
+
+        Steps (to implement):
+        1. Call sort_by_priority on pet.tasks.
+        2. Iterate; call fits_in_window; if True, call plan.add_entry.
+        3. Return the completed DailyPlan.
+        """
+        plan = DailyPlan(pet=self.pet, start_time=self.start_time)
+        pass  # TODO: implement — replace pass with scheduling loop
 
     def filter_tasks(self, tasks: list[Task]) -> list[Task]:
         """Remove tasks that cannot fit in the remaining window."""
