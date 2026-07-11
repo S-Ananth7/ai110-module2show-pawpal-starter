@@ -126,23 +126,18 @@ tests/test_pawpal.py::TestScheduler::test_build_all_plans_one_plan_per_pet PASSE
 
 ## 📐 Smarter Scheduling
 
-> Fill in once you've implemented scheduling logic.
-
 | Feature | Method(s) | Notes |
 |---------|-----------|-------|
-| Task sorting | | e.g., by priority, duration |
-| Filtering | | e.g., skip tasks if time runs out |
-| Conflict handling | | e.g., overlapping time slots |
-| Recurring tasks | | e.g., daily vs. weekly |
+| Task sorting | `Scheduler.sort_by_priority()`, `Pet.get_tasks_by_priority()` | Stable sort using `PRIORITY_ORDER` dict (high → medium → low) |
+| Filtering | `Scheduler.filter_tasks()`, `Scheduler.fits_in_window()` | Skips completed tasks and tasks exceeding remaining time budget |
+| Conflict handling | `Scheduler.build_plan()` greedy packing | Tasks are placed sequentially; if a task won't fit the remaining window it is excluded |
+| Recurring tasks | `Task.is_recurring` flag, `Scheduler._reason_for()` | Recurring tasks are annotated in the plan explanation; scheduling logic treats them the same as one-off tasks |
 
 ## 📸 Demo Walkthrough
 
-Describe your app in numbered steps so a reader can follow along without watching a video:
-
-1. <!-- Describe this step -->
-2. <!-- Describe this step -->
-3. <!-- Describe this step -->
-4. <!-- Describe this step -->
-5. <!-- Add more steps as needed -->
-
-**Screenshot or video** *(optional)*: <!-- Insert a screenshot or link to a demo video here -->
+1. **Run `python main.py`** — creates demo data (owner "Jordan", pets Mochi & Luna, eight tasks) and prints the daily schedule.
+2. **Owner setup** — Jordan is created with a 90-minute daily budget starting at 08:00.
+3. **Pet & task creation** — Two pets are registered; each gets four tasks with varying priorities (high / medium / low), durations, and categories.
+4. **Schedule generation** — `Scheduler.build_all_plans()` sorts each pet's tasks by priority and greedily packs them into the time window.
+5. **Output review** — The terminal displays each pet's timetable, a `[WHY]` explanation block per pet, and a combined task summary.
+6. **Streamlit UI** — Run `streamlit run app.py` for the interactive version: add pets, add tasks, view the schedule, filter by pet/status, and mark tasks complete.
