@@ -1,15 +1,68 @@
 classDiagram
-    %% Replace the placeholders below with your actual classes, attributes, methods, and relationships.
+    %% PawPal+ Class Diagram
     %% Keep this file updated so it matches your final implementation.
 
-    class ClassName {
-        +type attribute
-        +method() returnType
+    class Owner {
+        +str name
+        +int available_minutes
+        +str preferred_start_time
+        +list~str~ preferences
+        +get_schedule_window() tuple
     }
 
-    class AnotherClass {
-        +type attribute
-        +method() returnType
+    class Pet {
+        +str name
+        +str species
+        +str breed
+        +int age_years
+        +Owner owner
+        +list~Task~ tasks
+        +add_task(task: Task) None
+        +remove_task(title: str) None
+        +get_tasks_by_priority() list~Task~
     }
 
-    ClassName --> AnotherClass : relationship
+    class Task {
+        +str title
+        +int duration_minutes
+        +str priority
+        +bool is_recurring
+        +str category
+        +is_high_priority() bool
+        +to_dict() dict
+    }
+
+    class Scheduler {
+        +Pet pet
+        +int available_minutes
+        +build_plan() DailyPlan
+        +filter_tasks(tasks: list~Task~) list~Task~
+        +sort_by_priority(tasks: list~Task~) list~Task~
+        +fits_in_window(task: Task, remaining: int) bool
+    }
+
+    class DailyPlan {
+        +Pet pet
+        +list~ScheduledTask~ scheduled_tasks
+        +int total_duration_minutes
+        +str start_time
+        +add_entry(task: Task, start_time: str) None
+        +get_summary() str
+        +explain_plan() str
+    }
+
+    class ScheduledTask {
+        +Task task
+        +str start_time
+        +str end_time
+        +str reason
+        +format_entry() str
+    }
+
+    %% Relationships
+    Owner "1" --> "1..*" Pet : owns
+    Pet "1" --> "0..*" Task : has
+    Scheduler "1" --> "1" Pet : schedules for
+    Scheduler "1" --> "1" DailyPlan : produces
+    DailyPlan "1" --> "0..*" ScheduledTask : contains
+    ScheduledTask "1" --> "1" Task : wraps
